@@ -115,6 +115,13 @@ contract TrustTest is Test {
                         INITIALIZATION TESTS
     //////////////////////////////////////////////////////////////*/
 
+    function test_initialize_preventsWrongInitializerFromBeingCalled() external {
+        Trust freshTrust = _deployFreshTrust();
+
+        vm.expectRevert(Errors.Trust_OverridenInitializer.selector);
+        freshTrust.initialize(initialHypERC20Supply, "Intuition", "TRUST", hook, ism, admin);
+    }
+
     function test_initialize_successful() external {
         Trust freshTrust = _deployFreshTrust();
 
@@ -292,6 +299,27 @@ contract TrustTest is Test {
         assertEq(freshTrust.annualReductionBasisPoints(), 0);
     }
 
+    function test_initialize_withNonZeroInitialSupply() external {
+        Trust freshTrust = _deployFreshTrust();
+
+        uint256 initialSupply = 1e6 * 1e18; // 1 million tokens
+        freshTrust.initialize(
+            address(trustBonding),
+            maxAnnualEmission,
+            maxEmissionPerEpochBasisPoints,
+            annualReductionBasisPoints,
+            initialSupply,
+            hook,
+            ism,
+            admin
+        );
+
+        // If the initial supply is non-zero, it should be minted to the deployer (in this case, it's address(this)).
+        // In the production setting however, we expect the initial supply to be zero.
+        assertEq(freshTrust.totalSupply(), initialSupply);
+        assertEq(freshTrust.balanceOf(address(this)), initialSupply);
+    }
+
     /*//////////////////////////////////////////////////////////////
                         PAUSE/UNPAUSE TESTS
     //////////////////////////////////////////////////////////////*/
@@ -390,6 +418,16 @@ contract TrustTest is Test {
         vm.prank(address(trustBonding));
         vm.expectRevert(Errors.Trust_EpochMintingLimitExceeded.selector);
         trust.mint(alice, exceedingAmount);
+    }
+
+    function test_mint_updatesTotalMintedAmount() external {
+        uint256 amount = 1000 * 1e18;
+        uint256 initialAnnualMinted = trust.totalMintedAmount();
+
+        vm.prank(address(trustBonding));
+        trust.mint(alice, amount);
+
+        assertEq(trust.totalMintedAmount(), initialAnnualMinted + amount);
     }
 
     function test_mint_updatesAnnualMintedAmount() external {
