@@ -1,4 +1,4 @@
-# Intuition Contracts Hyperlane
+# Intuition Trust Token Contracts
 
 ## Deployed Contracts
 

@@ -19,10 +19,10 @@ contract DeployTrust is Script {
 
     /// @notice Trust-specific constants
     address public constant multisig = 0xa28d4AAcA48bE54824dA53a19b05121DE71Ef480; // Admin multisig address
-    address public constant trustBonding = address(1); // Replace with the actual deployed TrustBonding address
+    address public constant trustBonding = address(1); // NOTE: Replace with the actual deployed TrustBonding address in a production setting
     uint256 public constant maxAnnualEmission = 100_000_000 * 1e18; // 100 million TRUST
     uint256 public constant maxEmissionPerEpochBasisPoints = 10_000; // 100% of max annual emission (no epoch-level restrictions; useful in
-    // cases where we want admin multisig to mint any possibly unclaimed rewards, but can always be changed later)
+    // cases where we want admin multisig to mint any possibly unclaimed rewards, but can always be updated later)
     uint256 public constant annualReductionBasisPoints = 1000; // 10% annual reduction in the annual emission rate
 
     /// @notice Core contracts
@@ -38,11 +38,11 @@ contract DeployTrust is Script {
         // Allow the script to run only on Base Sepolia to prevent accidental deployments on mainnet
         // NOTE: When deploying in a production setting, make sure to replace the chain ID with the
         // chain ID of the Intuition L3 rollup, as that is where this token will be used.
-        if (block.chainid != 84532) {
+        if (block.chainid != 84_532) {
             revert UnsupportedChainId();
         }
 
-        mailbox = address(1); // Replace with actual Intuition L3 mailbox address
+        mailbox = 0x6966b0E55883d49BFB24539356a2f8A673E02039; // NOTE: Replace with actual Intuition L3 mailbox address in a production setting
         hook = address(IMailbox(mailbox).defaultHook());
         ism = address(IMailbox(mailbox).defaultIsm());
 

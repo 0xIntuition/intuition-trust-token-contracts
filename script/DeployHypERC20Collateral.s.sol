@@ -12,7 +12,7 @@ contract DeployHypERC20Collateral is Script {
     uint256 public constant scale = 1e18;
 
     /// @notice Base-specific constants
-    address public mailbox;
+    address public constant mailbox = 0xeA87ae93Fa0019a82A727bfd3eBd1cFCa8f64f1D;
     address public hook;
     address public ism;
 

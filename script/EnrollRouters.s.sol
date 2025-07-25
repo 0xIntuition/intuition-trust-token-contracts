@@ -6,6 +6,7 @@ import {HypERC20} from "@hyperlane-xyz/token/HypERC20.sol";
 import {HypERC20Collateral} from "@hyperlane-xyz/token/HypERC20Collateral.sol";
 import {TypeCasts} from "@hyperlane-xyz/libs/TypeCasts.sol";
 
+/// NOTE: This script only enrolls the routers between Base <> Arbitrum <> Ethereum, since Intuition L3 is not yet deployed.
 contract EnrollRouters is Script {
     using TypeCasts for address;
 
@@ -22,13 +23,13 @@ contract EnrollRouters is Script {
         HypERC20 arbSynthetic = HypERC20(address(2)); // Replace with the actual HypERC20 address on Arbitrum
         HypERC20 mainnetSynthetic = HypERC20(address(3)); // Replace with the actual HypERC20 address on Mainnet
 
-        uint32 baseDomain = uint32(1);
-        uint32 arbDomain = uint32(2);
-        uint32 mainnetDomain = uint32(3);
+        uint32 baseDomain = 8453;
+        uint32 arbDomain = 42_161;
+        uint32 mainnetDomain = 1;
 
         chainId = block.chainid;
 
-        if (chainId != 8453 || chainId != 42161 || chainId != 1) {
+        if (chainId != 8453 && chainId != 42161 && chainId != 1) {
             revert UnsupportedChainId();
         }
 
