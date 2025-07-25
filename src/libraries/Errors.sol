@@ -12,9 +12,6 @@ library Errors {
     error Trust_InvalidAnnualReductionBasisPoints();
     error Trust_InvalidMaxAnnualEmission();
     error Trust_InvalidMaxEmissionPerEpochBasisPoints();
-    error Trust_InvalidStartTimestamp();
-    error Trust_OnlyAdmin();
-    error Trust_OnlyMinter();
     error Trust_OverridenInitializer();
     error Trust_ZeroAddress();
     error Trust_ZeroAmount();

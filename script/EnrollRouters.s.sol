@@ -6,61 +6,71 @@ import {HypERC20} from "@hyperlane-xyz/token/HypERC20.sol";
 import {HypERC20Collateral} from "@hyperlane-xyz/token/HypERC20Collateral.sol";
 import {TypeCasts} from "@hyperlane-xyz/libs/TypeCasts.sol";
 
+/// NOTE: This script only enrolls the routers between Base <> Arbitrum <> Ethereum, since Intuition L3 is not yet deployed.
 contract EnrollRouters is Script {
     using TypeCasts for address;
 
+    uint256 public chainId;
+
+    error UnsupportedChainId();
+
     function run() external {
-        // Load deployments
-        string memory baseJson = vm.readFile("./deployments/base.json");
-        string memory arbJson = vm.readFile("./deployments/arbitrum.json");
-        string memory mainnetJson = vm.readFile("./deployments/mainnet.json");
+        vm.startBroadcast();
 
-        address baseCollateral = vm.parseJsonAddress(baseJson, ".collateral");
-        address arbSynthetic = vm.parseJsonAddress(arbJson, ".synthetic");
-        address mainnetSynthetic = vm.parseJsonAddress(mainnetJson, ".synthetic");
+        address multisig = 0xa28d4AAcA48bE54824dA53a19b05121DE71Ef480; // Admin Safe (address is the same across all chains)
 
-        uint32 baseDomain = uint32(vm.envUint("BASE_DOMAIN"));
-        uint32 arbDomain = uint32(vm.envUint("ARBITRUM_DOMAIN"));
-        uint32 mainnetDomain = uint32(vm.envUint("MAINNET_DOMAIN"));
+        HypERC20Collateral baseCollateral = HypERC20Collateral(address(1)); // Replace with the actual HypERC20Collateral address on Base
+        HypERC20 arbSynthetic = HypERC20(address(2)); // Replace with the actual HypERC20 address on Arbitrum
+        HypERC20 mainnetSynthetic = HypERC20(address(3)); // Replace with the actual HypERC20 address on Mainnet
 
-        uint256 deployerKey = vm.envUint("DEPLOYER_KEY");
+        uint32 baseDomain = 8453;
+        uint32 arbDomain = 42_161;
+        uint32 mainnetDomain = 1;
 
-        // 1. Enroll on Base
-        console.log("=== Enrolling routers on Base ===");
-        vm.createSelectFork(vm.envString("BASE_RPC"));
-        vm.startBroadcast(deployerKey);
+        chainId = block.chainid;
 
-        HypERC20Collateral(baseCollateral).enrollRemoteRouter(arbDomain, arbSynthetic.addressToBytes32());
-        console.log("Base -> Arbitrum route enrolled");
+        if (chainId != 8453 && chainId != 42161 && chainId != 1) {
+            revert UnsupportedChainId();
+        }
 
-        HypERC20Collateral(baseCollateral).enrollRemoteRouter(mainnetDomain, mainnetSynthetic.addressToBytes32());
-        console.log("Base -> Mainnet route enrolled");
+        // 1. Enroll routers on Base
+        if (chainId == 8453) {
+            console.log("=== Enrolling routers on Base ===");
+            baseCollateral.enrollRemoteRouter(arbDomain, address(arbSynthetic).addressToBytes32());
+            console.log("Base -> Arbitrum route enrolled");
 
-        vm.stopBroadcast();
+            baseCollateral.enrollRemoteRouter(mainnetDomain, address(mainnetSynthetic).addressToBytes32());
+            console.log("Base -> Mainnet route enrolled");
 
-        // 2. Enroll on Arbitrum
-        console.log("\n=== Enrolling routers on Arbitrum ===");
-        vm.createSelectFork(vm.envString("ARBITRUM_RPC"));
-        vm.startBroadcast(deployerKey);
+            baseCollateral.transferOwnership(multisig);
+            console.log("Base collateral ownership transferred to multisig");
+        }
 
-        HypERC20(arbSynthetic).enrollRemoteRouter(baseDomain, baseCollateral.addressToBytes32());
-        console.log("Arbitrum -> Base route enrolled");
+        // 2. Enroll routers on Arbitrum
+        if (chainId == 42_161) {
+            console.log("\n=== Enrolling routers on Arbitrum ===");
+            arbSynthetic.enrollRemoteRouter(baseDomain, address(baseCollateral).addressToBytes32());
+            console.log("Arbitrum -> Base route enrolled");
 
-        HypERC20(arbSynthetic).enrollRemoteRouter(mainnetDomain, mainnetSynthetic.addressToBytes32());
-        console.log("Arbitrum -> Mainnet route enrolled");
+            arbSynthetic.enrollRemoteRouter(mainnetDomain, address(mainnetSynthetic).addressToBytes32());
+            console.log("Arbitrum -> Mainnet route enrolled");
 
-        vm.stopBroadcast();
+            arbSynthetic.transferOwnership(multisig);
+            console.log("Arbitrum synthetic ownership transferred to multisig");
+        }
 
-        // 3. Enroll on Mainnet
-        console.log("\n=== Enrolling routers on Mainnet ===");
-        vm.createSelectFork(vm.envString("MAINNET_RPC"));
-        vm.startBroadcast(deployerKey);
+        // 3. Enroll routers on Mainnet
+        if (chainId == 1) {
+            console.log("\n=== Enrolling routers on Mainnet ===");
+            mainnetSynthetic.enrollRemoteRouter(baseDomain, address(baseCollateral).addressToBytes32());
+            console.log("Mainnet -> Base route enrolled");
 
-        HypERC20(mainnetSynthetic).enrollRemoteRouter(baseDomain, baseCollateral.addressToBytes32());
-        console.log("Mainnet -> Base route enrolled");
+            mainnetSynthetic.enrollRemoteRouter(arbDomain, address(arbSynthetic).addressToBytes32());
+            console.log("Mainnet -> Arbitrum route enrolled");
 
-        HypERC20(mainnetSynthetic).enrollRemoteRouter(arbDomain, arbSynthetic.addressToBytes32());
-        console.log("Mainnet -> Arbitrum route enrolled");
+            mainnetSynthetic.transferOwnership(multisig);
+            console.log("Mainnet synthetic ownership transferred to multisig");
+        }
 
         vm.stopBroadcast();
     }

@@ -41,6 +41,9 @@ contract Trust is Initializable, HypERC20, AccessControlUpgradeable, PausableUpg
                                  STATE
     //////////////////////////////////////////////////////////////*/
 
+    /// @notice Tracks the total amount of Trust tokens minted since inception
+    uint256 public totalMintedAmount;
+
     /// @notice Tracks the start of the current annual period
     uint256 public annualPeriodStartTime;
 
@@ -109,6 +112,9 @@ contract Trust is Initializable, HypERC20, AccessControlUpgradeable, PausableUpg
                                  INITIALIZER
     //////////////////////////////////////////////////////////////*/
 
+    /**
+     * @dev This function overrides the HypERC20 initializer to prevent wrong initialization.
+     */
     function initialize(
         uint256, /* _totalSupply */
         string memory, /* _name */
@@ -116,7 +122,7 @@ contract Trust is Initializable, HypERC20, AccessControlUpgradeable, PausableUpg
         address, /* _hook */
         address, /* _interchainSecurityModule */
         address /* _owner */
-    ) public override {
+    ) public pure override {
         revert Errors.Trust_OverridenInitializer();
     }
 
@@ -384,5 +390,8 @@ contract Trust is Initializable, HypERC20, AccessControlUpgradeable, PausableUpg
 
         // Update the epoch minted amount
         epochMintedAmount += amount;
+
+        // Update the total minted amount
+        totalMintedAmount += amount;
     }
 }

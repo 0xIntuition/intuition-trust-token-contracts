@@ -19,20 +19,24 @@ contract DeployHypERC20 is Script {
     address public hook;
     address public ism;
 
+    uint256 public chainId;
+
     error UnsupportedChainId();
 
     function run() external {
+        chainId = block.chainid;
+
         // Allow the script to run only on Arbitrum Mainnet or ETH Mainnet
-        if (block.chainid != 42_161 || block.chainid != 1) {
+        if (chainId != 42_161 && chainId != 1) {
             revert UnsupportedChainId();
         }
 
-        if (block.chainid == 42_161) {
-            mailbox = address(1); // Replace with actual Arbitrum mailbox address
+        if (chainId == 42_161) {
+            mailbox = 0x979Ca5202784112f4738403dBec5D0F3B9daabB9;
             hook = address(IMailbox(mailbox).defaultHook());
             ism = address(IMailbox(mailbox).defaultIsm());
-        } else {
-            mailbox = address(2); // Replace with actual Ethereum mailbox address
+        } else if (chainId == 1) {
+            mailbox = 0xc005dc82818d67AF737725bD4bf75435d065D239;
             hook = address(IMailbox(mailbox).defaultHook());
             ism = address(IMailbox(mailbox).defaultIsm());
         }
